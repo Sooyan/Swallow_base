@@ -2,6 +2,7 @@ package soo.swallow.base;
 
 import android.app.Activity;
 import android.app.Dialog;
+import android.app.Fragment;
 import android.content.res.Resources;
 import android.view.View;
 
@@ -78,5 +79,18 @@ public class ViewFinder {
             }
         }
         throw new Resources.NotFoundException("No view has been found which id is:" + id);
+    }
+
+    /**Find view by id in fragment
+     * @param fragment The view belong to
+     * @param id The view`s id
+     * @param <V> The type that view will be cast to
+     * @return Instance of dest type
+     * @throws ClassCastException There is a view that can`t be cast to dest type
+     * @throws Resources.NotFoundException There is no view has be found by id
+     */
+    public static <V extends View> V findViewById(Fragment fragment, int id) {
+        View view = fragment.getView();
+        return findViewById(view, id);
     }
 }
