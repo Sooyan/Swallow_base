@@ -57,20 +57,31 @@ public class FileUtils {
             file.deleteOnExit();
         }
         if (!file.exists()) {
-            if (file.mkdirs()) {
-                try {
-                    file.createNewFile();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+            File parentDir = file.getParentFile();
+            if (!parentDir.exists()) {
+                parentDir.mkdirs();
+            }
+            try {
+                file.createNewFile();
+            } catch (IOException e) {
+                e.printStackTrace();
             }
         }
 
         return file.exists();
     }
 
-    public static File createDir() {
-        return null;
+    /**Create a directory file
+     * @param file The file to be created
+     * @param flag If true, always create a new directory;otherwise create a new directory if the file is not exist
+     * @return True if create success, otherwise return false
+     */
+    public static boolean createDir(File file, boolean flag) {
+        ArgsUtils.notNull(file, "File is null");
+        if (flag && file.isDirectory()) {
+            file.deleteOnExit();
+        }
+        return file.mkdirs();
     }
 
 }
