@@ -34,10 +34,10 @@ public final class AsyncUtils {
 
     private static Map<Looper, AsyncUtils> pool = new WeakHashMap<Looper, AsyncUtils>();
 
-    private final int CPU_COUNT = Runtime.getRuntime().availableProcessors();
-    private final int CORE_POOL_SIZE = CPU_COUNT + 1;
-    private final int MAXIMUM_POOL_SIZE = CPU_COUNT * 2 + 1;
-    private final int KEEP_ALIVE = 3;
+    private static final int CPU_COUNT = Runtime.getRuntime().availableProcessors();
+    private static final int CORE_POOL_SIZE = CPU_COUNT + 1;
+    private static final int MAXIMUM_POOL_SIZE = CPU_COUNT * 2 + 1;
+    private static final int KEEP_ALIVE = 3;
 
     private final ThreadFactory sThreadFactory = new ThreadFactory() {
 
@@ -47,7 +47,6 @@ public final class AsyncUtils {
             return new Thread(r, "AsyncUtils #" + count.getAndIncrement());
         }
     };
-
 
     private final Handler handler;
     private final Executor executor;
