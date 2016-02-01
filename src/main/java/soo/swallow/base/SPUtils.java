@@ -17,47 +17,60 @@
 package soo.swallow.base;
 
 import android.content.Context;
-import android.content.ContextWrapper;
 import android.content.SharedPreferences;
 
 import java.io.File;
-import java.lang.reflect.Field;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 
-/**
+import soo.swallow.base.exception.ReasonException;
+
+/**The SharedPreferences tools kit
  * Created by Soo.
  */
 public class SPUtils {
 
-    public static SharedPreferences getSharedPreferences(Context context, String name, int mod) {
-        return null;
-    }
-
-    public static SharedPreferences getSharedPreferences(Context context, File dirFile, String name, int mod) {
-        ArgsUtils.notNull(dirFile, "The directory of preference is null");
-        if (!dirFile.isDirectory()) {
-            throw new IllegalArgumentException("The file is not directory");
+    /**Get instance of SharedPreferences by particular directory and name.
+     * @param context getSharedPreferences by context when the directory file is null
+     * @param directoryFile The directory which is the parent of xml file
+     * @param name The name of xml file
+     * @param mod The access of xml file for read or write
+     * @return The instance of SharedPreferences
+     * @throws ReasonException
+     */
+    public static SharedPreferences getSharedPreferences(Context context, File directoryFile, String name, int mod) throws ReasonException {
+        if (directoryFile == null) {
+            return context.getSharedPreferences(name, mod);
         }
-        if (!FileUtils.createDir(dirFile, false)) {
-//            TODO
+        if (!directoryFile.isDirectory()) {
+            throw new IllegalArgumentException("directoryFile is not directory file");
+        }
+        if (!name.endsWith(".xml")) {
+            name += ".xml";
+        }
+        File spFile = FileUtils.createFile(directoryFile, name, false);
+        if (spFile == null || !spFile.exists()) {
+            throw new RuntimeException("Can not create target file[" + name + "]which parent is[" + directoryFile + "]");
         }
         try {
-            Field mBaseField = ContextWrapper.class.getDeclaredField("mBase");
-            mBaseField.setAccessible(true);
-            Object mBaseObj = mBaseField.get(context);
-            Field mPreferencesField = mBaseObj.getClass().getField("mPreferencesDir");
-            mPreferencesField.setAccessible(true);
-
-            Object originDirFile = mPreferencesField.get(mBaseObj);
-            mPreferencesField.set(mBaseObj, dirFile);
-            SharedPreferences sharedPreferences = context.getSharedPreferences(name, mod);
-            mPreferencesField.set(mBaseObj, originDirFile);
-
-            return sharedPreferences;
-        } catch (NoSuchFieldException e) {
-            e.printStackTrace();
+            Class<?> implCls = Class.forName("android.app.SharedPreferencesImpl");
+            Constructor<?> cons = implCls.getDeclaredConstructor(File.class, int.class);
+            cons.setAccessible(true);
+            Object obj = cons.newInstance(spFile, mod);
+            return (SharedPreferences) obj;
+        } catch (ClassNotFoundException e) {
+            throw new ReasonException("Failed, because:" + e.getMessage());
+        } catch (NoSuchMethodException e) {
+            throw new ReasonException("Failed, because:" + e.getMessage());
+        } catch (InstantiationException e) {
+            throw new ReasonException("Failed, because:" + e.getMessage());
         } catch (IllegalAccessException e) {
-            e.printStackTrace();
+            throw new ReasonException("Failed, because:" + e.getMessage());
+        } catch (IllegalArgumentException e) {
+            throw new ReasonException("Failed, because:" + e.getMessage());
+        } catch (InvocationTargetException e) {
+            throw new ReasonException("Failed, because:" + e.getMessage());
         }
-        return null;
     }
+
 }
