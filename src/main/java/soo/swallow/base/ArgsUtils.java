@@ -40,8 +40,13 @@ public class ArgsUtils {
         }
     }
 
+    /**Throw IllegalArgumentException if the destination is not instance of particular class type
+     * @param object The destination object
+     * @param cls The particular class type
+     */
     public static void mustInstanceOf(Object object, Class<?> cls) {
-        notNull(object, null);
+        notNull(object);
+        notNull(cls);
         if (!object.getClass().equals(cls)) {
             throw new IllegalArgumentException(object.getClass() + "is not instance of " + cls);
         }
