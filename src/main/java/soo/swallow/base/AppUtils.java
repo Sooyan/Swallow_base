@@ -19,6 +19,7 @@ package soo.swallow.base;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.Environment;
+import android.os.Looper;
 import android.text.TextUtils;
 
 /**The kit of many general tools
@@ -53,5 +54,14 @@ public class AppUtils {
         }
         String packageName = context.getPackageName();
         return PackageManager.PERMISSION_GRANTED == context.getPackageManager().checkPermission(permission, packageName);
+    }
+
+    /**
+     * Check whether the current invoking is in main-thread
+     */
+    public static void mustInMainThread() {
+        if (Looper.myLooper() != Looper.getMainLooper()) {
+            throw new RuntimeException("Must be in main-thread");
+        }
     }
 }

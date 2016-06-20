@@ -39,4 +39,11 @@ public class ArgsUtils {
             throw new NullPointerException(message == null ? "" : message);
         }
     }
+
+    public static void mustInstanceOf(Object object, Class<?> cls) {
+        notNull(object, null);
+        if (!object.getClass().equals(cls)) {
+            throw new IllegalArgumentException(object.getClass() + "is not instance of " + cls);
+        }
+    }
 }
