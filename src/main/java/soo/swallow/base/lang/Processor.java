@@ -24,7 +24,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import soo.swallow.base.Log;
 
 /**
- * Created by Soo.
+ * @author Soo.
  */
 public class Processor implements Runnable {
 

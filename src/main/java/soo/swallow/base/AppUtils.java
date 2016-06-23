@@ -64,4 +64,9 @@ public class AppUtils {
             throw new RuntimeException("Must be in main-thread");
         }
     }
+
+    public static boolean networkEnable(Context context) {
+        return false;
+    }
+
 }
