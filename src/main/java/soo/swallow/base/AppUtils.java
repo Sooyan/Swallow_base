@@ -66,7 +66,7 @@ public class AppUtils {
     }
 
     public static boolean networkEnable(Context context) {
-        return false;
+        return true;
     }
 
 }
