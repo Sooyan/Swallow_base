@@ -17,9 +17,12 @@ package soo.swallow.base;
 
 import android.app.Activity;
 import android.app.Dialog;
-import android.app.Fragment;
+import android.content.Context;
 import android.content.res.Resources;
+import android.support.v4.app.Fragment;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 
 /**
  * Help to find a view that was identified by the id and cast to the type which you want
@@ -107,5 +110,25 @@ public class ViewFinder {
     public static <V extends View> V findViewById(Fragment fragment, int id) {
         View view = fragment.getView();
         return findViewById(view, id);
+    }
+
+    public static <V extends View> V inflate(Context context, int resource, ViewGroup viewGroup) {
+        LayoutInflater inflater = LayoutInflater.from(context);
+        return inflate(inflater, resource, viewGroup);
+    }
+
+    @SuppressWarnings("unchecked")
+    public static <V extends View> V inflate(LayoutInflater inflater, int resource, ViewGroup viewGroup) {
+        View view = inflater.inflate(resource, viewGroup);
+        if (view != null) {
+            V v = null;
+            try {
+                v = (V) view;
+                return v;
+            } catch (Exception e) {
+                throw new IllegalArgumentException("The view which resource=" + resource + "can`t cast to dest class");
+            }
+        }
+        throw new IllegalArgumentException("There is no view which resource=" + resource);
     }
 }
