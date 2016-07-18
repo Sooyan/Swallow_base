@@ -47,7 +47,8 @@ public class ArgsUtils {
     public static void mustInstanceOf(Object object, Class<?> cls) {
         notNull(object);
         notNull(cls);
-        if (!object.getClass().equals(cls)) {
+
+        if (!cls.isInstance(object)) {
             throw new IllegalArgumentException(object.getClass() + "is not instance of " + cls);
         }
     }
