@@ -30,9 +30,11 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @Documented
 @Target(METHOD)
 @Retention(RUNTIME)
-public @interface Mn {
+public @interface AspectMode {
 
-    String value() default "";
+    String method();
 
-    Class<?>[] parameters();
+    Class<?>[] types() default {};
+
+    boolean async() default false;
 }
