@@ -33,10 +33,11 @@ import soo.swallow.base.AsyncUtils;
 public class Aspector {
     private static final String TAG = "Aspect--->";
 
-    public static <T> T aspect(Class<?> tClass, T delegate, Aspect aspect) {
-        ArgsUtils.notNull(tClass, "Type");
-        ArgsUtils.notNull(delegate, "Object of class");
-        if (!tClass.isInterface()) {
+    public static <T> T aspect(Class<?> interfaceClass, T interfaceDelegate, Aspect aspect) {
+        ArgsUtils.notNull(interfaceClass, "Interface Class");
+        ArgsUtils.notNull(interfaceDelegate, "Delegate of class");
+        ArgsUtils.notNull(aspect, "Aspect");
+        if (!interfaceClass.isInterface()) {
             throw new IllegalArgumentException("Class of aspect must is interface");
         }
         try {
@@ -47,14 +48,14 @@ public class Aspector {
                 throw new IllegalArgumentException("The name of Aspect-Method must is not empty");
             }
             Class<?>[] parameters = aspectMode.types();
-            Method destMethod = delegate.getClass().getMethod(name, parameters);
+            Method destMethod = interfaceDelegate.getClass().getMethod(name, parameters);
             boolean isAsync = aspectMode.async();
-            if (isAsync && destMethod.getReturnType().equals(void.class)) {
+            if (isAsync && !destMethod.getReturnType().equals(void.class)) {
                 throw new IllegalArgumentException("Aspect async must have no return value");
             }
 
-            return (T) Proxy.newProxyInstance(delegate.getClass().getClassLoader(),
-                    new Class[]{tClass}, new AspectInvocationHandler<>(delegate, aspect, parameters, isAsync));
+            return (T) Proxy.newProxyInstance(interfaceDelegate.getClass().getClassLoader(),
+                    new Class[]{interfaceClass}, new AspectInvocationHandler<>(interfaceDelegate, aspect, parameters, isAsync));
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
             throw new IllegalArgumentException("Failed to aspect", e);
