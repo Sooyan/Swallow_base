@@ -22,5 +22,5 @@ package soo.swallow.base.aspect;
  */
 public interface Aspect {
 
-    Object[] aspect(Object[] params);
+    Object[] aspect(Object[] params) throws Throwable;
 }

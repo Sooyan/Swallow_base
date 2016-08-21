@@ -216,8 +216,8 @@ public final class AsyncUtils {
         void onReceived(T data);
     }
 
-    /**This is task that onDo-method will be executed in async-thread,
-     * and onReceived-method will be executed in sync-thread
+    /**This is task that onDo-method will be executed on async-thread,
+     * and onReceived-method will be executed on sync-thread
      * @param <Param> The type of param
      * @param <Result> The type of result
      */

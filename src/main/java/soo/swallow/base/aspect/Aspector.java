@@ -17,8 +17,6 @@
 
 package soo.swallow.base.aspect;
 
-import android.text.TextUtils;
-
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -33,6 +31,7 @@ import soo.swallow.base.AsyncUtils;
 public class Aspector {
     private static final String TAG = "Aspect--->";
 
+
     public static <T> T aspect(Class<?> interfaceClass, T interfaceDelegate, Aspect aspect) {
         ArgsUtils.notNull(interfaceClass, "Interface Class");
         ArgsUtils.notNull(interfaceDelegate, "Delegate of class");
@@ -40,82 +39,84 @@ public class Aspector {
         if (!interfaceClass.isInterface()) {
             throw new IllegalArgumentException("Class of aspect must is interface");
         }
+        if (!isInstanceOfType(interfaceDelegate.getClass(), interfaceClass)) {
+            throw new IllegalArgumentException("Delegate must is instance of " + interfaceClass.getName());
+        }
         try {
             Method aspectMethod = aspect.getClass().getMethod("aspect", Object[].class);
             AspectMode aspectMode = aspectMethod.getAnnotation(AspectMode.class);
-            String name = aspectMode.method();
-            if (TextUtils.isEmpty(name)) {
-                throw new IllegalArgumentException("The name of Aspect-Method must is not empty");
-            }
-            Class<?>[] parameters = aspectMode.types();
-            Method destMethod = interfaceDelegate.getClass().getMethod(name, parameters);
-            boolean isAsync = aspectMode.async();
-            if (isAsync && !destMethod.getReturnType().equals(void.class)) {
-                throw new IllegalArgumentException("Aspect async must have no return value");
-            }
-
             return (T) Proxy.newProxyInstance(interfaceDelegate.getClass().getClassLoader(),
-                    new Class[]{interfaceClass}, new AspectInvocationHandler<>(interfaceDelegate, aspect, parameters, isAsync));
+                    new Class[]{interfaceClass}, new AspectInvocationHandler2<>(interfaceDelegate, aspect, aspectMode));
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
             throw new IllegalArgumentException("Failed to aspect", e);
         }
     }
 
-    static class AspectInvocationHandler<T> implements InvocationHandler {
+    private static boolean isInstanceOfType(Class<?> destClass, Class<?> typeClass) {
+        if (destClass == null || typeClass == null) {
+            return false;
+        }
+        if (destClass.equals(typeClass)) {
+            return true;
+        }
+        if (destClass.equals(Object.class)) {
+            return false;
+        }
+        Class<?> [] interfaces = destClass.getInterfaces();
+        if (interfaces != null && interfaces.length > 0) {
+            for (Class<?> cls : interfaces) {
+                return isInstanceOfType(cls, typeClass);
+            }
+        }
+        return isInstanceOfType(destClass.getSuperclass(), typeClass);
+    }
 
-        private final T delegate;
-        private final Aspect aspect;
-        private final Class<?>[] parameterTypes;
-        private final boolean isAsync;
+    static class AspectInvocationHandler2<T> implements InvocationHandler {
 
-        public AspectInvocationHandler(T delegate, Aspect aspect, Class<?>[] parameterTypes, boolean isAsync) {
+        final T delegate;
+        final Aspect aspect;
+        final AspectMode aspectMode;
+
+        AspectInvocationHandler2(T delegate, Aspect aspect, AspectMode aspectMode) {
             this.delegate = delegate;
             this.aspect = aspect;
-            this.parameterTypes = parameterTypes;
-            this.isAsync = isAsync;
+            this.aspectMode = aspectMode;
         }
 
         @Override
         public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-            if (method.getDeclaringClass() == Object.class) {
-                return method.invoke(this, args);
-            }
-
-            Object[] newArgs = args;
-            if (isMatch(parameterTypes, args)) {
+            if (isMatch(method, args)) {
+                InnerReceiverTask<T> task = new InnerReceiverTask<>(method, delegate, aspect);
+                boolean isAsync = aspectMode.async();
                 if (isAsync) {
-                    AsyncUtils.getDefault().postReceiverTask(new InnerReceiverTask<>(method, delegate, aspect), newArgs);
-                    return null;
+                    AsyncUtils.getDefault().postReceiverTask(task, args);
+                    return args;
                 } else {
-                    newArgs = aspect.aspect(newArgs);
+                    try {
+                        task.onDo(args);
+                    } finally {}
                 }
             }
-
-            return method.invoke(delegate, newArgs);
+            return method.invoke(delegate, args);
         }
 
-        static boolean isMatch(Class<?>[] parameterTypes, Object[] args) {
-            return isSame(parameterTypes, getArgTypes(args));
-        }
-
-        static Class<?>[] getArgTypes(Object[] args) {
-            int length = args.length;
-            Class<?>[] types = new Class<?>[length];
-            for (int i = 0; i < length; i++) {
-                Object obj = args[i];
-                types[i] = obj.getClass();
-            }
-            return types;
-        }
-
-        static boolean isSame(Class<?>[] types1, Class<?>[] types2) {
-            if (types1.length != types2.length) {
+        private boolean isMatch(Method method, Object[] args) {
+            String methodName = method.getName();
+            String aspectName = aspectMode.method();
+            if (!methodName.contains(aspectName)) {
                 return false;
             }
-            int length = types1.length;
+            Class<?>[] aspectParametersTypes = aspectMode.types();
+            if (aspectParametersTypes.length != args.length) {
+                return false;
+            }
+            int length = aspectParametersTypes.length;
             for (int i = 0; i < length; i++) {
-                if (!types1[i].equals(types2[i])) {
+                Object obj = args[i];
+                Class<?> objClass = obj.getClass();
+                Class<?> parametersClass = aspectParametersTypes[i];
+                if (!objClass.equals(parametersClass)) {
                     return false;
                 }
             }
@@ -123,11 +124,13 @@ public class Aspector {
         }
     }
 
-    static class InnerReceiverTask<T> implements AsyncUtils.ReceiverTask<Object[], Object[]> {
+    static class InnerReceiverTask<T> implements AsyncUtils.ReceiverTask<Object[], Void> {
 
         final Method method;
         final T delegate;
         final Aspect aspect;
+
+        Object[] args;
 
         InnerReceiverTask(Method method, T delegate, Aspect aspect) {
             this.method = method;
@@ -136,14 +139,20 @@ public class Aspector {
         }
 
         @Override
-        public Object[] onDo(Object[] objects) {
-            return aspect.aspect(objects);
+        public Void onDo(Object[] objects) {
+            args = objects;
+            try {
+                aspect.aspect(args);
+            } catch (Throwable throwable) {
+                throwable.printStackTrace();
+            }
+            return null;
         }
 
         @Override
-        public void onReceived(Object[] data) {
+        public void onReceived(Void data) {
             try {
-                method.invoke(delegate, data);
+                method.invoke(delegate, args);
             } catch (IllegalAccessException e) {
                 e.printStackTrace();
             } catch (InvocationTargetException e) {
