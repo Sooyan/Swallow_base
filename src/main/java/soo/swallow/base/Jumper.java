@@ -26,7 +26,7 @@ import android.support.v4.app.Fragment;
 /**
  * @author Soo
  */
-public class Jumper {
+public class Jumper implements Serializable{
 
     public static final String JUMPER_ANIMATION_BACK_IN = "Jumper_animation_back_in";
     public static final String JUMPER_ANIMATION_BACK_OUT = "Jumper_animation_back_out";
@@ -112,7 +112,8 @@ public class Jumper {
             ((Activity) packageContext).overridePendingTransition(aheadInAnimation, aheadOutAnimation);
         }
     }
-    
+
+    @Deprecated
     public void jumpForResult(Context packageContext, Class<?> cls, int code) {
         intent.setClass(packageContext, cls);
         intent.putExtra(JUMPER_ANIMATION_BACK_IN, backInAnimation);
@@ -174,8 +175,9 @@ public class Jumper {
             if (obj instanceof Activity) {
                 jumpForResult((Activity) obj, cls, requestCode);
                 return;
+            } else {
+                throw new IllegalArgumentException("This obj(" + obj.getClass().getName() + ") can`t support jumping");
             }
-            jumpForResult((Context) obj, cls, requestCode);
         } else if (obj instanceof Fragment) {
             jumpForResult((Fragment) obj, cls, requestCode);
         } else {
@@ -187,4 +189,14 @@ public class Jumper {
         // TODO
     }
 
+    public interface Jumpable {
+//        Empty
+//        For:Notice make animation
+
+//        like the follow
+
+//        Intent intent = getIntent();
+//        backInAnimationId = intent.getIntExtra(Jumper.JUMPER_ANIMATION_BACK_IN, 0);
+//        backOutAnimationId = intent.getIntExtra(Jumper.JUMPER_ANIMATION_BACK_OUT, 0);
+    }
 }
