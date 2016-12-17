@@ -23,9 +23,10 @@ import java.util.Map;
 
 import android.view.View;
 import android.view.View.OnClickListener;
-/**
+/**@see GMInvoker
  * @author Soo
  */
+@Deprecated
 public final class CallbackCompact<T> {
     
     private static Map<Class<?>, String> mapping = new HashMap<Class<?>, String>();

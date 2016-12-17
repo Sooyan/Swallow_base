@@ -22,4 +22,13 @@ package soo.swallow.base;
 public class MathUtils {
     private static final String TAG = "MathUtils--->";
 
+    public static int clamp(int value, int minValue, int maxValue) {
+        if (value < minValue) {
+            value = minValue;
+        }
+        if (value > maxValue) {
+            value = maxValue;
+        }
+        return value;
+    }
 }

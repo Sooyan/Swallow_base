@@ -52,4 +52,11 @@ public class ArgsUtils {
             throw new IllegalArgumentException(object.getClass() + "is not instance of " + cls);
         }
     }
+
+    public static <T> T fixIfNull(T t, T fix) {
+        if (t == null) {
+            return fix;
+        }
+        return t;
+    }
 }

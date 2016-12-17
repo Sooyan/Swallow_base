@@ -16,11 +16,16 @@
 
 package soo.swallow.base;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.Environment;
 import android.os.Looper;
+import android.support.v4.app.ActivityCompat;
 import android.text.TextUtils;
+
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 
 /**The kit of many general tools
  * Created by Soo.
@@ -69,4 +74,20 @@ public class AppUtils {
         return true;
     }
 
+    public static boolean shouldShowRequestPermissionRationale(Context context, String permission) {
+        if (context instanceof Activity) {
+            return ActivityCompat.shouldShowRequestPermissionRationale((Activity) context, permission);
+        }
+        PackageManager packageManager = context.getPackageManager();
+        Class<?> cls = packageManager.getClass();
+        try {
+            Method method = cls.getDeclaredMethod("shouldShowRequestPermissionRationale", String.class);
+            method.setAccessible(true);
+            Object result = method.invoke(packageManager, permission);
+            return (boolean) result;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
 }
